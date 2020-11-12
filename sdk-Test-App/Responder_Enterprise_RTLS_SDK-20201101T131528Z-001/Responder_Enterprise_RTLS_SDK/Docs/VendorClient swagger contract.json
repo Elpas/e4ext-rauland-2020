@@ -1,0 +1,71 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "version": "v1",
+        "title": "Rtls API"
+    },
+    "paths": {
+        "/api/movement": {
+            "put": {
+                "tags": [
+                    "Movement"
+                ],
+                "operationId": "ApiMovementPut",
+                "consumes": [
+                    "application/json-patch+json",
+                    "application/json",
+                    "text/json",
+                    "application/*+json"
+                ],
+                "produces": [],
+                "parameters": [
+                    {
+                        "name": "movement",
+                        "in": "body",
+                        "required": false,
+                        "schema": {
+                            "$ref": "#/definitions/Movement"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "Movement": {
+            "type": "object",
+            "properties": {
+                "vendorSourceName": {
+                    "type": "string"
+                },
+                "movements": {
+                    "uniqueItems": false,
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/MovementTag"
+                    }
+                }
+            }
+        },
+        "MovementTag": {
+            "type": "object",
+            "properties": {
+                "tag": {
+                    "type": "string"
+                },
+                "location": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "format": "date-time",
+                    "type": "string"
+                }
+            }
+        }
+    }
+}
