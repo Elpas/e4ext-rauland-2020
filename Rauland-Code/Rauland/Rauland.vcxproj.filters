@@ -24,6 +24,9 @@
     <ClCompile Include="CRaulandExt.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="CDlgSetup.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Rauland.def">
@@ -50,6 +53,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CRaulandExt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CDlgSetup.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
