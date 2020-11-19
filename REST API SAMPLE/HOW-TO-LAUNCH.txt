@@ -1,0 +1,12 @@
+i used the followkng blog to create certificate :
+https://dotnetplaybook.com/custom-local-domain-using-https-kestrel-asp-net-core/
+there is also a video
+https://www.youtube.com/watch?v=96KHOaIe19w
+
+to run the code pulish it :
+
+cd C:\Elpas\e4ext-rauland-2020\REST API SAMPLE\core3\core3\bin\Release\netcoreapp3.0\publish
+	
+than run the rauland server :
+C:\Elpas\e4ext-rauland-2020\sdk-Test-App\Responder_Enterprise_RTLS_SDK-20201101T131528Z-001\Responder_Enterprise_RTLS_SDK\RaulandEnterpriseRtlsSdk.exe -u https://localshop.io:5001/ -p 8081
+
