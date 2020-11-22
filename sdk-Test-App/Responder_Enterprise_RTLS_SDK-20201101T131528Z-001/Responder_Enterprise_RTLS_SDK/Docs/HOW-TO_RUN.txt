@@ -1,3 +1,1 @@
-https://localhost:44348/
-
-C:\Elpas\e4ext-rauland-2020\sdk-Test-App\Responder_Enterprise_RTLS_SDK-20201101T131528Z-001\Responder_Enterprise_RTLS_SDK\RaulandEnterpriseRtlsSdk.exe -u https://localhost:44381/ -p 8081
+C:\Elpas\e4ext-rauland-2020\sdk-Test-App\Responder_Enterprise_RTLS_SDK-20201101T131528Z-001\Responder_Enterprise_RTLS_SDK\RaulandEnterpriseRtlsSdk.exe -u https://localhost:44398/ -p 8081
