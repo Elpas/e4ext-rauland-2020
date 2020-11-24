@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.IO;
@@ -70,9 +72,18 @@ namespace REST.Controllers
 
            
             Console.WriteLine(jsonString);
-            return jsonString.ToString();
+            return jsonString;
 
         }
+        public class tagsResponse
+        {
+
+            public Int32 Total;
+            public ArrayList  tags;
+        }
+
+
+
         [HttpGet("/tags")]
         public string Tags()
         {
@@ -80,29 +91,67 @@ namespace REST.Controllers
             string skip = HttpContext.Request.Query["skip"].ToString();
             string top = HttpContext.Request.Query["top"].ToString();
 
+            ArrayList arr = MyFunctions.readFile("rauland_badges.txt");
+            tagsResponse res = new tagsResponse();
+            res.Total = arr.Count;
+            res.tags = new ArrayList();
 
-
-
-
-
-            String utc = DateTime.UtcNow.ToString("yyyy-MM-ddTHH\\:mm\\:ssZ"); //.fffffffzzz");
-
-            var obj = new Version1
+            int nSkip = Convert.ToInt32(skip);
+            int nTop= Convert.ToInt32(top);
+            for (int  i= nSkip;( i<(nSkip + nTop) && i<arr.Count); i++)
             {
+                JObject o =(JObject) arr[i];
+                string name = (string)o["Name"];
+                res.tags.Add(name);
 
-                brand = "Rtls Make",
-                VendorSourceName = "RTLS east wing",
-                version = "Alpha - 5.2",
-                timestamp = "2018-06-28T17:48:18Z"
+            }
 
-            };
-
-            var jsonString = Newtonsoft.Json.JsonConvert.SerializeObject(obj);
+            var jsonString = Newtonsoft.Json.JsonConvert.SerializeObject(res);
 
 
             Console.WriteLine(jsonString);
             return jsonString.ToString();
 
         }
+        public class locationsResponse
+        {
+
+            public Int32 Total;
+            public ArrayList locations;
+        }
+
+        [HttpGet("/locations")]
+        public string Locations()
+        {
+
+            string skip = HttpContext.Request.Query["skip"].ToString();
+            string top = HttpContext.Request.Query["top"].ToString();
+
+            ArrayList arr = MyFunctions.readFile("rauland_readers.txt");
+            locationsResponse res = new locationsResponse();
+            res.Total = arr.Count;
+            res.locations = new ArrayList();
+
+            int nSkip = Convert.ToInt32(skip);
+            int nTop = Convert.ToInt32(top);
+            for (int i = nSkip; (i < (nSkip + nTop) && i < arr.Count); i++)
+            {
+                JObject o = (JObject)arr[i];
+                string name = (string)o["Name"];
+                res.locations.Add(name);
+
+            }
+
+            var jsonString = Newtonsoft.Json.JsonConvert.SerializeObject(res);
+
+
+            Console.WriteLine(jsonString);
+            return jsonString.ToString();
+
+        }
+
+
+
+
     }
 }

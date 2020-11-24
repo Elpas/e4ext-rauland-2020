@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using REST.Controllers; 
 
 namespace REST
 {
@@ -13,6 +14,7 @@ namespace REST
     {
         public static void Main(string[] args)
         {
+            MyFunctions.SendHttpGet("http://192.168.0.64:8081/healthcheck");
             CreateHostBuilder(args).Build().Run();
         }
 
