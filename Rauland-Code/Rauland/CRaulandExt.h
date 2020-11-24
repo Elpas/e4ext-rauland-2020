@@ -8,11 +8,22 @@ class CSetup;
 #include "CDlgSetup.h"
 
 #define PROP_URL  "propUrl" 
+#define TRB_ONLINE      "online"
+#define TRB_OFFLINE      "offline"
 
 class CRaulandExt :
     public CEirisExt
 {
 public:
+	void CRaulandExt::Stopping();
+	void CRaulandExt::handleSupervision();
+	HANDLE m_hThread; 
+	HANDLE m_heTerminate;
+	HANDLE m_heSendQueue;
+	CRITICAL_SECTION m_cs;
+	CList< EIRIS_MSGDATA_BADGE_EVENT*, EIRIS_MSGDATA_BADGE_EVENT*> m_listEvents; 
+	void CRaulandExt::postEvent(EIRIS_MSGDATA_BADGE_EVENT* pEvent);
+
 	CRaulandExt::CRaulandExt();
 	void CRaulandExt::UpdateRaulandObj();
 	virtual CString GetName() const { return "Rauland2020"; }

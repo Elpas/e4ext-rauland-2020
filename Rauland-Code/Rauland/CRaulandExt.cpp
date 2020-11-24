@@ -9,7 +9,136 @@ enum
 	SETUP_SETTINGS = 1
 	
 };
+DWORD WINAPI ThreadRauland(LPVOID pParam)
+{
+	
+	bool bFirst = true;
+	bool bEngineUp = false;
+	UINT count = 0;
+	while (true)
+	{
 
+
+		if (!bEngineUp)
+		{
+			CEirisLock lock;
+
+			while (!lock.Lock())
+				Sleep(10);
+
+			int nRc = g_eiris.GetControllerStartStatus();
+			lock.Unlock();
+
+			if (nRc == -1)
+			{
+				continue;
+			}
+			else
+			{
+				if (nRc < 100)
+				{
+					continue;
+				}
+				
+			}
+		}
+
+		HANDLE ahWaitHandles1[2];
+		ahWaitHandles1[0] = g_ext->m_heTerminate;
+		ahWaitHandles1[1] = g_ext->m_heSendQueue;
+
+		while (true)
+		{
+			int nWaitnRc = WaitForMultipleObjects(2, ahWaitHandles1, FALSE, 30000);
+						
+
+			if (nWaitnRc == WAIT_OBJECT_0)
+			{
+				CEirisLock lock;
+				while (!lock.Lock())
+					Sleep(100);
+
+				g_eiris.RemoveMonitorThread(g_ext->m_hThread);
+				return 1;
+			}
+			g_ext->handleSupervision(); 
+			if (nWaitnRc == WAIT_OBJECT_0 + 1)
+			{
+				bool bCont = true; 
+				while (bCont)
+				{
+					::EnterCriticalSection(&g_ext->m_cs);
+					if (g_ext->m_listEvents.IsEmpty())
+					{
+						::LeaveCriticalSection(&g_ext->m_cs);
+						bCont = false;
+						continue; 
+					}
+					::LeaveCriticalSection(&g_ext->m_cs);
+
+					::EnterCriticalSection(&g_ext->m_cs);
+					EIRIS_MSGDATA_BADGE_EVENT  *pEvent=g_ext->m_listEvents.RemoveHead();
+					::LeaveCriticalSection(&g_ext->m_cs);
+					g_ext->postEvent(pEvent);
+
+					delete pEvent; 
+					pEvent = NULL; 
+
+				}
+
+			}
+			
+
+		}
+	}
+}
+static  EirisMsgRtn(OnBadgeEvents)
+{
+
+	
+	EIRIS_MSGDATA_BADGE_EVENT* pMsg = (EIRIS_MSGDATA_BADGE_EVENT*)data;
+
+	/*
+
+	if (pMsg->eventType != EIRIS_BADGE_EVT_LOCATION /*&&
+	   pMsg->eventType != EIRIS_BADGE_EVT_BUTTONPRESS &&
+	   pMsg->eventType != EIRIS_BADGE_EVT_BATTERY &&
+	   pMsg->eventType != EIRIS_BADGE_EVT_MOTION
+		)
+		return;
+
+		*/
+
+   EIRIS_MSGDATA_BADGE_EVENT* pEvent = new EIRIS_MSGDATA_BADGE_EVENT();
+
+   pEvent->tEvent = pMsg->tEvent;
+   pEvent->eventType = pMsg->eventType;
+   pEvent->idBadge = pMsg->idBadge;
+   pEvent->lBadgeNeuron = pMsg->lBadgeNeuron;
+   pEvent->idLocation = pMsg->idLocation;
+   pEvent->bTrue = pMsg->bTrue;
+   pEvent->lEventData1 = pMsg->lEventData1;
+   pEvent->lEventData2 = pMsg->lEventData2;
+
+   ::EnterCriticalSection(&g_ext->m_cs);
+   try
+   {
+
+	   if (g_ext->m_listEvents.GetCount() < 10000)
+	   {
+		   g_ext->m_listEvents.AddTail(pEvent);
+	   }
+
+   }
+   catch (...)
+   {
+
+   }
+
+   ::LeaveCriticalSection(&g_ext->m_cs);
+   SetEvent(g_ext->m_heSendQueue);
+   
+}
 static EirisMsgRtn(OnDbChange)
 {
 
@@ -57,6 +186,18 @@ static EirisMsgRtn(OnDbChange)
 
 
 }
+
+void CRaulandExt::postEvent(EIRIS_MSGDATA_BADGE_EVENT*pEvent) //@@@
+{
+
+}
+
+
+void CRaulandExt::handleSupervision() //@@@
+{
+
+}
+
 #include <direct.h>
 #include <fstream>
 #include <string> 
@@ -118,6 +259,8 @@ void CRaulandExt::UpdateRaulandObj()
 	while (!lock.Lock())
 		Sleep(100);
 
+	m_nAppRauland = 0;
+
 	CEirisIds ids;
 	g_eiris.GetObjsByProgramId(PID_RAULAND, ids);
 	if (ids.GetSize() >= 1)
@@ -128,7 +271,19 @@ void CRaulandExt::UpdateRaulandObj()
 			m_nAppRauland = ids.GetAt(0);
 
 	}
-	m_nAppRauland = 0; 
+	if (m_nAppRauland == 0)
+		return; 
+
+	static bool bFirst = true; 
+	if (bFirst)
+	{
+		bFirst = false; 
+		DWORD dwThread = 0;
+		m_hThread = CreateThread(NULL, 0, ThreadRauland, this, 0, &dwThread);
+		g_eiris.MonitorThread(m_hThread, dwThread, "TRauland");
+		g_eiris.AddMsgHandler(EIRIS_MSG_BADGE_EVENT, OnBadgeEvents, (long)this);
+
+	}
 
 }
 void CRaulandExt::UpdateBadges()
@@ -202,11 +357,24 @@ void CRaulandExt::UpdateRdrs()
 	lock.Unlock();
 	WriteFile("rauland_readers.txt", stFinal);
 }
+void CRaulandExt::Stopping()
+{
+	if (!g_eiris.IsController())
+		return;
+
+	SetEvent(m_heTerminate);
+
+}
 CRaulandExt::CRaulandExt()
 {
 	g_ext = this;
 	m_pDlgSetup = NULL; 
 	m_nAppRauland = 0;
+
+	 m_heTerminate= CreateEvent(NULL, TRUE, FALSE, NULL); 
+	 m_heSendQueue= CreateEvent(NULL, TRUE, FALSE, NULL); 
+	 ::InitializeCriticalSection(&m_cs);
+
 }
 
 
@@ -233,12 +401,18 @@ BOOL CRaulandExt::Init()
 	// pass this info to the engine.
 	g_eiris.AddPidInfo(&info);
 
+#define DRV  "Rauland" 
+
+	g_eiris.RegisterTrouble(TRB_ONLINE, "Rauland server is online", DRV);
+	g_eiris.RegisterTrouble(TRB_OFFLINE, "Rauland server is offline", DRV);
+
 	if (!g_eiris.IsController())
 		return TRUE;
 
 
 	g_eiris.AddMsgHandler(EIRIS_MSG_DB_CHANGE, OnDbChange, (long)this);
 
+	
 	return TRUE;
 }
 
