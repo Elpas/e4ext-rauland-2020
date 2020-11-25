@@ -11,10 +11,21 @@ class CSetup;
 #define TRB_ONLINE      "online"
 #define TRB_OFFLINE      "offline"
 
+typedef int (PROTOTYPE_sendHttpPost)(char*, char*, char*, char*, char*);
+typedef int (PROTOTYPE_sendHttpGet)(char*, char*, char*);
+
+
+
 class CRaulandExt :
     public CEirisExt
 {
 public:
+	bool boffline; 
+	CString m_stRaulandServerUrl;
+	PROTOTYPE_sendHttpPost* m_pSendhttpPost;
+	PROTOTYPE_sendHttpGet* m_pSendhttpGet;
+	HMODULE m_hDll;
+	void CRaulandExt::InitDll();
 	void CRaulandExt::Stopping();
 	void CRaulandExt::handleSupervision();
 	HANDLE m_hThread; 
@@ -23,7 +34,7 @@ public:
 	CRITICAL_SECTION m_cs;
 	CList< EIRIS_MSGDATA_BADGE_EVENT*, EIRIS_MSGDATA_BADGE_EVENT*> m_listEvents; 
 	void CRaulandExt::postEvent(EIRIS_MSGDATA_BADGE_EVENT* pEvent);
-
+	void CRaulandExt::GenerateTrouble(CString stConstTrouble, bool bRestore);
 	CRaulandExt::CRaulandExt();
 	void CRaulandExt::UpdateRaulandObj();
 	virtual CString GetName() const { return "Rauland2020"; }

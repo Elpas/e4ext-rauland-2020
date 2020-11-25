@@ -64,6 +64,8 @@ DWORD WINAPI ThreadRauland(LPVOID pParam)
 			g_ext->handleSupervision(); 
 			if (nWaitnRc == WAIT_OBJECT_0 + 1)
 			{
+				SetEvent(g_ext->m_heSendQueue);
+
 				bool bCont = true; 
 				while (bCont)
 				{
@@ -192,9 +194,64 @@ void CRaulandExt::postEvent(EIRIS_MSGDATA_BADGE_EVENT*pEvent) //@@@
 
 }
 
+void CRaulandExt::GenerateTrouble(CString stConstTrouble,bool bRestore)
+{
+	CEirisLock lock;
+	while (!lock.Lock(1000))
+		Sleep(10);
 
+	EIRIS_MSGDATA_TROUBLE_EVENT  eTrouble;
+	
+	eTrouble.idObject = this->m_nAppRauland;
+	
+
+	strcpy_s(eTrouble.tszEventID, stConstTrouble);
+	
+
+	eTrouble.bRestore = bRestore;
+	eTrouble.tEvent = ::GetTickCount();
+	g_eiris.SendMsgEvent(EIRIS_MSG_TROUBLE_EVENT, 0, 0, sizeof(EIRIS_MSGDATA_TROUBLE_EVENT), &eTrouble);
+
+}
 void CRaulandExt::handleSupervision() //@@@
 {
+	static CTime lastGot = CTime::GetCurrentTime();
+	CTimeSpan ts = CTime::GetCurrentTime() - lastGot;
+	if (ts.GetTotalSeconds() < 20)
+		return; 
+	
+	if (ts.GetTotalMinutes() > 5)
+	{
+		if (boffline == false)
+		{
+			GenerateTrouble(TRB_OFFLINE,false);
+			boffline = true;
+		}
+
+	}
+	
+	//healthcheck
+	char* res = new char[100000]; 
+	CString s;
+	s = m_stRaulandServerUrl;
+	s +="//healthcheck";
+	int rc = m_pSendhttpGet(s.GetBuffer(0), "", res);
+	s.ReleaseBuffer();
+	if (rc == 1)
+	{
+		lastGot = CTime::GetCurrentTime();
+		if (boffline)
+		{
+			GenerateTrouble(TRB_ONLINE, true);
+			boffline = false;
+		}
+	}
+	delete res;
+
+
+
+
+
 
 }
 
@@ -267,8 +324,13 @@ void CRaulandExt::UpdateRaulandObj()
 	{
 		CString s; 
 		g_eiris.GetValue(ids.GetAt(0), PROP_URL, s);
-		if(!s.IsEmpty()) 
+		if (!s.IsEmpty())
+		{
 			m_nAppRauland = ids.GetAt(0);
+			m_stRaulandServerUrl = s;
+			
+		}
+
 
 	}
 	if (m_nAppRauland == 0)
@@ -282,8 +344,54 @@ void CRaulandExt::UpdateRaulandObj()
 		m_hThread = CreateThread(NULL, 0, ThreadRauland, this, 0, &dwThread);
 		g_eiris.MonitorThread(m_hThread, dwThread, "TRauland");
 		g_eiris.AddMsgHandler(EIRIS_MSG_BADGE_EVENT, OnBadgeEvents, (long)this);
+		InitDll();
 
 	}
+
+}
+void CRaulandExt::InitDll()
+{
+	bool bRc = false;
+
+	try
+	{
+
+		
+		static CString stPath = "";
+
+		
+			
+			CEirisLock lock;
+			while (!lock.Lock(10))
+				Sleep(10);
+
+			stPath = g_eiris.GetDataPath();
+			stPath += "\\Extensions\\NETBridge.dll";
+			lock.Unlock();
+
+		
+
+		m_hDll = LoadLibrary(stPath.GetBuffer(0));
+		if (!m_hDll)
+		{
+			g_eiris.WriteEngineLog("RAULAND Error loading NETBridge.dll please make sure you place it in Extensions folder!");
+			return;
+		}
+
+		stPath.ReleaseBuffer();
+		
+		m_pSendhttpPost = *(PROTOTYPE_sendHttpPost*)GetProcAddress(m_hDll, "sendHttpPost");
+		m_pSendhttpGet = *(PROTOTYPE_sendHttpGet*)GetProcAddress(m_hDll, "sendHttpGet");
+
+
+			   
+	}
+	catch (...)
+	{
+
+	}
+
+	return;
 
 }
 void CRaulandExt::UpdateBadges()
@@ -367,6 +475,7 @@ void CRaulandExt::Stopping()
 }
 CRaulandExt::CRaulandExt()
 {
+	boffline = false; 
 	g_ext = this;
 	m_pDlgSetup = NULL; 
 	m_nAppRauland = 0;
