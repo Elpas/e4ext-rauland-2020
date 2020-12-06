@@ -81,7 +81,25 @@ DWORD WINAPI ThreadRauland(LPVOID pParam)
 					::EnterCriticalSection(&g_ext->m_cs);
 					EIRIS_MSGDATA_BADGE_EVENT  *pEvent=g_ext->m_listEvents.RemoveHead();
 					::LeaveCriticalSection(&g_ext->m_cs);
-					g_ext->postEvent(pEvent);
+					
+					for (int x = 0; x < 10; x++)
+					{
+						int nRc = g_ext->postEvent(pEvent);
+						if (nRc == 1)
+						{
+							x = 100; 
+						}
+						else
+						{
+							if (x == 9)
+							{
+								g_ext->GenerateTrouble(TRB_FAILED_POST, FALSE, g_ext->m_stLastError); 
+							}
+							Sleep(1000); 
+
+						}
+					}
+					
 
 					delete pEvent; 
 					pEvent = NULL; 
@@ -188,13 +206,58 @@ static EirisMsgRtn(OnDbChange)
 
 
 }
-
-void CRaulandExt::postEvent(EIRIS_MSGDATA_BADGE_EVENT*pEvent) //@@@
+void addField(CString stProp, CString stVal, CString& stJson)
 {
+	stJson += '"';
+	stJson += stProp;
+	stJson += '"';
+	stJson += ':';
+	stJson += '"';
+	stJson += stVal;
+	stJson += '"';
+
+}
+int CRaulandExt::postEvent(EIRIS_MSGDATA_BADGE_EVENT*pEvent) 
+{
+	CEirisLock lock;
+	while (!lock.Lock(1000))
+		Sleep(10);
+
+	CString json = "{"; 
+	addField("VendorSourceName", PROP_VENDOR,json); 
+	json += '"';
+	json += "movements";
+	json += '"';
+	json += ": [	{";
+
+	CString stNeuron = g_eiris.GetNeuron(pEvent->idBadge);
+	addField("tag", stNeuron, json);
+	CString reader = g_eiris.GetObjName(pEvent->idLocation);
+	addField("location", reader, json);
+	addField("timestamp", "@UTC@", json);
+
+	
+	json+= "}] }";
+	m_stLastError = "";
+
+
+	CString s;
+	s = m_stRaulandServerUrl;
+	s += "//movement";
+
+	// sendHttpPost(char* url, char* data, char* contentType,    char* responsehttp, char* method)
+	char res[10000]; 
+	int nRc = m_pSendhttpPost(s.GetBuffer(0), json.GetBuffer(0), "", res, "PUT");
+	if (nRc != 1)
+		m_stLastError = res; 
+
+	return nRc;
+
+
 
 }
 
-void CRaulandExt::GenerateTrouble(CString stConstTrouble,bool bRestore)
+void CRaulandExt::GenerateTrouble(CString stConstTrouble,bool bRestore, CString  sDesc)
 {
 	CEirisLock lock;
 	while (!lock.Lock(1000))
@@ -206,14 +269,14 @@ void CRaulandExt::GenerateTrouble(CString stConstTrouble,bool bRestore)
 	
 
 	strcpy_s(eTrouble.tszEventID, stConstTrouble);
-	
+	strcpy_s(eTrouble.tszDescription, sDesc.Left(200));
 
 	eTrouble.bRestore = bRestore;
 	eTrouble.tEvent = ::GetTickCount();
 	g_eiris.SendMsgEvent(EIRIS_MSG_TROUBLE_EVENT, 0, 0, sizeof(EIRIS_MSGDATA_TROUBLE_EVENT), &eTrouble);
 
 }
-void CRaulandExt::handleSupervision() //@@@
+void CRaulandExt::handleSupervision() 
 {
 	static CTime lastGot = CTime::GetCurrentTime();
 	CTimeSpan ts = CTime::GetCurrentTime() - lastGot;
@@ -514,7 +577,7 @@ BOOL CRaulandExt::Init()
 
 	g_eiris.RegisterTrouble(TRB_ONLINE, "Rauland server is online", DRV);
 	g_eiris.RegisterTrouble(TRB_OFFLINE, "Rauland server is offline", DRV);
-
+	g_eiris.RegisterTrouble(TRB_FAILED_POST, "Failed to send badge movement to rauland server", DRV);
 	if (!g_eiris.IsController())
 		return TRUE;
 

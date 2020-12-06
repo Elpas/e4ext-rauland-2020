@@ -14,7 +14,7 @@ namespace REST
     {
         public static void Main(string[] args)
         {
-            MyFunctions.SendHttpGet("http://192.168.0.64:8081/healthcheck");
+            //MyFunctions.SendHttpGet("http://192.168.0.64:8081/healthcheck");
             CreateHostBuilder(args).Build().Run();
         }
 

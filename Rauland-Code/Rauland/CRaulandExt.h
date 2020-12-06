@@ -10,11 +10,12 @@ class CSetup;
 #define PROP_URL  "propUrl" 
 #define TRB_ONLINE      "online"
 #define TRB_OFFLINE      "offline"
+#define TRB_FAILED_POST      "failed post"
 
 typedef int (PROTOTYPE_sendHttpPost)(char*, char*, char*, char*, char*);
 typedef int (PROTOTYPE_sendHttpGet)(char*, char*, char*);
 
-
+#define PROP_VENDOR	"OmniRtls"
 
 class CRaulandExt :
     public CEirisExt
@@ -33,8 +34,9 @@ public:
 	HANDLE m_heSendQueue;
 	CRITICAL_SECTION m_cs;
 	CList< EIRIS_MSGDATA_BADGE_EVENT*, EIRIS_MSGDATA_BADGE_EVENT*> m_listEvents; 
-	void CRaulandExt::postEvent(EIRIS_MSGDATA_BADGE_EVENT* pEvent);
-	void CRaulandExt::GenerateTrouble(CString stConstTrouble, bool bRestore);
+	int CRaulandExt::postEvent(EIRIS_MSGDATA_BADGE_EVENT* pEvent);
+	CString m_stLastError;
+	void CRaulandExt::GenerateTrouble(CString stConstTrouble, bool bRestore,CString sDesc="");
 	CRaulandExt::CRaulandExt();
 	void CRaulandExt::UpdateRaulandObj();
 	virtual CString GetName() const { return "Rauland2020"; }

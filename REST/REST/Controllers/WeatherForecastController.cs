@@ -56,9 +56,9 @@ namespace REST.Controllers
         public string Version()
         {
 
-            String utc = DateTime.UtcNow.ToString("yyyy-MM-ddTHH\\:mm\\:ssZ"); //.fffffffzzz");
+            String utc = DateTime.Now.ToString("yyyy-MM-ddTHH\\:mm\\:ssZ"); //.fffffffzzz");
 
-            var obj = new Version1
+           /* var obj = new Version1
             {
              
                 brand= "Rtls Make" ,
@@ -66,11 +66,23 @@ namespace REST.Controllers
                 version= "Alpha - 5.2",
                 timestamp= "2018-06-28T17:48:18Z"
 
-            };
-         
-            var jsonString = Newtonsoft.Json.JsonConvert.SerializeObject(obj);
+            }*/
+             var obj = new Version1
+             {
 
+                 brand = "Rtls Make",
+                 VendorSourceName = "RTLSVENDOR1",
+                 version = "Alpha-5.2",
+                 timestamp = utc
+
+             };
+
+            var jsonString = Newtonsoft.Json.JsonConvert.SerializeObject(obj);
+            /*string final = "Version Result";
+            final += jsonString;
            
+            */
+
             Console.WriteLine(jsonString);
             return jsonString;
 
