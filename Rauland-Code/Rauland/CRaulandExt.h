@@ -21,6 +21,8 @@ class CRaulandExt :
     public CEirisExt
 {
 public:
+	CTime m_lastGotSupervision ;
+	CString CRaulandExt::GetValidName(long nId);
 	bool boffline; 
 	CString m_stRaulandServerUrl;
 	PROTOTYPE_sendHttpPost* m_pSendhttpPost;
@@ -29,6 +31,7 @@ public:
 	void CRaulandExt::InitDll();
 	void CRaulandExt::Stopping();
 	void CRaulandExt::handleSupervision();
+	void CRaulandExt::AddDebug(CString msg, BOOL bWriteEngineLog=false);
 	HANDLE m_hThread; 
 	HANDLE m_heTerminate;
 	HANDLE m_heSendQueue;

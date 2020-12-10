@@ -26,12 +26,12 @@ namespace core3
             {
                 webBuilder.ConfigureKestrel(opt =>
                 {
-                    opt.ListenAnyIP(5001, listenOpt =>
+                   /* opt.ListenAnyIP(5001, listenOpt =>
                     {
                         listenOpt.UseHttps(
                          @"D:\localshop.pfx",
                           "pa55w0rd!");
-                    });
+                    });*/
                     opt.ListenAnyIP(5000);
                 });
 

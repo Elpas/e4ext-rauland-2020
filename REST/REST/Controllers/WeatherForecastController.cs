@@ -16,6 +16,7 @@ namespace REST.Controllers
 {
     [ApiController]
     [Route("[controller]")]
+    [Produces("application/json")]
     public class WeatherForecastController : ControllerBase
     {
         private static readonly string[] Summaries = new[]
@@ -53,10 +54,11 @@ namespace REST.Controllers
 
       
         [HttpGet("/version")]
-        public string Version()
+        public ContentResult Version()
         {
+           
 
-            String utc = DateTime.Now.ToString("yyyy-MM-ddTHH\\:mm\\:ssZ"); //.fffffffzzz");
+            String utc = DateTime.UtcNow.ToString("yyyy-MM-ddTHH\\:mm\\:ssZ"); //.fffffffzzz");
 
            /* var obj = new Version1
             {
@@ -71,33 +73,36 @@ namespace REST.Controllers
              {
 
                  brand = "Rtls Make",
-                 VendorSourceName = "RTLSVENDOR1",
+                 VendorSourceName = "OmniRtls",
                  version = "Alpha-5.2",
                  timestamp = utc
 
              };
-
-            var jsonString = Newtonsoft.Json.JsonConvert.SerializeObject(obj);
+              var jsonString = Newtonsoft.Json.JsonConvert.SerializeObject(obj);
+         
             /*string final = "Version Result";
             final += jsonString;
            
             */
 
+
             Console.WriteLine(jsonString);
-            return jsonString;
+            // return jsonString;
+            return Content(jsonString, "application/json");
 
         }
+
         public class tagsResponse
         {
 
-            public Int32 Total;
+            public Int32 total;
             public ArrayList  tags;
         }
 
 
 
         [HttpGet("/tags")]
-        public string Tags()
+        public ContentResult Tags()
         {
                
             string skip = HttpContext.Request.Query["skip"].ToString();
@@ -105,7 +110,7 @@ namespace REST.Controllers
 
             ArrayList arr = MyFunctions.readFile("rauland_badges.txt");
             tagsResponse res = new tagsResponse();
-            res.Total = arr.Count;
+            res.total = arr.Count;
             res.tags = new ArrayList();
 
             int nSkip = Convert.ToInt32(skip);
@@ -122,18 +127,19 @@ namespace REST.Controllers
 
 
             Console.WriteLine(jsonString);
-            return jsonString.ToString();
+            return Content(jsonString, "application/json");
+           // return jsonString.ToString();
 
         }
         public class locationsResponse
         {
 
-            public Int32 Total;
+            public Int32 total;
             public ArrayList locations;
         }
 
         [HttpGet("/locations")]
-        public string Locations()
+        public ContentResult Locations()
         {
 
             string skip = HttpContext.Request.Query["skip"].ToString();
@@ -141,7 +147,7 @@ namespace REST.Controllers
 
             ArrayList arr = MyFunctions.readFile("rauland_readers.txt");
             locationsResponse res = new locationsResponse();
-            res.Total = arr.Count;
+            res.total = arr.Count;
             res.locations = new ArrayList();
 
             int nSkip = Convert.ToInt32(skip);
@@ -158,7 +164,8 @@ namespace REST.Controllers
 
 
             Console.WriteLine(jsonString);
-            return jsonString.ToString();
+            return Content(jsonString, "application/json");
+         //   return jsonString.ToString();
 
         }
 

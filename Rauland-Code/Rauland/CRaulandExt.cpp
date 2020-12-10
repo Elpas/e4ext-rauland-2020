@@ -225,15 +225,21 @@ int CRaulandExt::postEvent(EIRIS_MSGDATA_BADGE_EVENT*pEvent)
 
 	CString json = "{"; 
 	addField("VendorSourceName", PROP_VENDOR,json); 
+	json += ',';
 	json += '"';
 	json += "movements";
 	json += '"';
 	json += ": [	{";
 
-	CString stNeuron = g_eiris.GetNeuron(pEvent->idBadge);
-	addField("tag", stNeuron, json);
-	CString reader = g_eiris.GetObjName(pEvent->idLocation);
+	CString stNameBadge = GetValidName(pEvent->idBadge);
+
+	addField("tag", stNameBadge, json);
+	json += ',';
+
+	CString reader = GetValidName(pEvent->idLocation);
+
 	addField("location", reader, json);
+	json += ',';
 	addField("timestamp", "@UTC@", json);
 
 	
@@ -243,14 +249,23 @@ int CRaulandExt::postEvent(EIRIS_MSGDATA_BADGE_EVENT*pEvent)
 
 	CString s;
 	s = m_stRaulandServerUrl;
-	s += "//movement";
+	s += "/movement";
+	lock.Unlock(); 
 
 	// sendHttpPost(char* url, char* data, char* contentType,    char* responsehttp, char* method)
+	CString s1;
+	s1.Format("sending location update to url=%s  data=%s", s, json);
+	this->AddDebug(s1);
 	char res[10000]; 
 	int nRc = m_pSendhttpPost(s.GetBuffer(0), json.GetBuffer(0), "", res, "PUT");
 	if (nRc != 1)
 		m_stLastError = res; 
+	else
+		m_lastGotSupervision = CTime::GetCurrentTime();
 
+	s1 = "";
+	s1.Format("got response=%u data=%s ", nRc, res);
+	this->AddDebug(s1);
 	return nRc;
 
 
@@ -276,10 +291,20 @@ void CRaulandExt::GenerateTrouble(CString stConstTrouble,bool bRestore, CString 
 	g_eiris.SendMsgEvent(EIRIS_MSG_TROUBLE_EVENT, 0, 0, sizeof(EIRIS_MSGDATA_TROUBLE_EVENT), &eTrouble);
 
 }
+void CRaulandExt::AddDebug(CString msg , BOOL bWriteEngineLog)
+{
+	CString st = "";
+	st+= msg; 
+	st+= "\r\n";
+	
+	g_eiris.WriteDebugLog(this->m_nAppRauland, st);
+	if (bWriteEngineLog)
+		g_eiris.WriteEngineLog(st);
+}
 void CRaulandExt::handleSupervision() 
 {
-	static CTime lastGot = CTime::GetCurrentTime();
-	CTimeSpan ts = CTime::GetCurrentTime() - lastGot;
+	
+	CTimeSpan ts = CTime::GetCurrentTime() - m_lastGotSupervision;
 	if (ts.GetTotalSeconds() < 20)
 		return; 
 	
@@ -297,12 +322,22 @@ void CRaulandExt::handleSupervision()
 	char* res = new char[100000]; 
 	CString s;
 	s = m_stRaulandServerUrl;
-	s +="//healthcheck";
+	s +="/healthcheck";
+
+	CString s1;
+	s1.Format("sending health update to url=%s ", s);
+	this->AddDebug(s1);
+
+
 	int rc = m_pSendhttpGet(s.GetBuffer(0), "", res);
+	s1 = ""; 
+	s1.Format("got response nRc=%u data=%s ",rc, res);
+	this->AddDebug(s1);
+
 	s.ReleaseBuffer();
 	if (rc == 1)
 	{
-		lastGot = CTime::GetCurrentTime();
+		m_lastGotSupervision = CTime::GetCurrentTime();
 		if (boffline)
 		{
 			GenerateTrouble(TRB_ONLINE, true);
@@ -457,6 +492,15 @@ void CRaulandExt::InitDll()
 	return;
 
 }
+CString CRaulandExt::GetValidName(long nId )
+{
+	CString name; 
+	g_eiris.GetValue(nId, "Name", name);
+	name.Replace("_", "");
+	name.Replace(",", "");
+	name.Replace(" ", "");
+	return name;
+}
 void CRaulandExt::UpdateBadges()
 {
 
@@ -474,7 +518,8 @@ void CRaulandExt::UpdateBadges()
 	{
 		long id = g_eiris.GetBadgeAt(i); 
 		CString  stName; 
-		g_eiris.GetValue(id, "Name", stName);
+		stName=GetValidName(id);
+		
 		
 		CString json = "{";
 		json += '"';
@@ -510,7 +555,8 @@ void CRaulandExt::UpdateRdrs()
 	{
 		long id = g_eiris.GetReaderAt(i);
 		CString  stName;
-		g_eiris.GetValue(id, "Name", stName);
+		stName = GetValidName(id);
+
 		CString json = "{";
 		json += '"';
 		json += "Name";
@@ -542,6 +588,8 @@ CRaulandExt::CRaulandExt()
 	g_ext = this;
 	m_pDlgSetup = NULL; 
 	m_nAppRauland = 0;
+	m_lastGotSupervision=CTime::GetCurrentTime();
+
 
 	 m_heTerminate= CreateEvent(NULL, TRUE, FALSE, NULL); 
 	 m_heSendQueue= CreateEvent(NULL, TRUE, FALSE, NULL); 

@@ -1,17 +1,22 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
+
 namespace core3.Controllers
 {
     [ApiController]
     [Route("[controller]")]
+    [Produces("application/json")]
     public class WeatherForecastController : ControllerBase
     {
         private static readonly string[] Summaries = new[]
@@ -39,58 +44,133 @@ namespace core3.Controllers
             .ToArray();
         }
 
-        [HttpGet("/version")]
-        public string Version()
+        public class Version1
         {
-            using var ms = new MemoryStream();
-            using var writer = new Utf8JsonWriter(ms);
-
-            writer.WriteStartObject();
-            writer.WriteString("name", "John Doe");
-            writer.WriteString("occupation", "gardener");
-            writer.WriteNumber("age", 34);
-            writer.WriteEndObject();
-            writer.Flush();
-
-            string json = Encoding.UTF8.GetString(ms.ToArray());
-
-            Console.WriteLine(json);
-            return json.ToString() ;
-
-            /*
-            StringBuilder sb = new StringBuilder();
-            StringWriter sw = new StringWriter(sb);
-
-            using (JsonWriter writer = new JsonTextWriter(sw))
-            {
-                writer.Formatting = Formatting.Indented;
-
-                writer.WriteStartObject();
-                writer.WritePropertyName("brand");
-                writer.WriteValue("Rtls Make");
-
-                writer.WritePropertyName("VendorSourceName");
-                writer.WriteValue("OMNI");
-
-                writer.WritePropertyName("version");
-                writer.WriteValue("Alpha - 5.2");
-
-                writer.WritePropertyName("timestamp");
-                writer.WriteValue("Alpha ");
-
-
-
-                writer.WritePropertyName("Drives");
-                writer.WriteStartArray();
-                writer.WriteValue("DVD read/writer");
-                writer.WriteComment("(broken)");
-                writer.WriteValue("500 gigabyte hard drive");
-                writer.WriteValue("200 gigabyte hard drive");
-                writer.WriteEnd();
-                string rc = sb.ToString();
-                return rc;
-            }
-            return "value";*/
+            public string brand;
+            public string VendorSourceName;
+            public string version;
+            public string timestamp;
         }
+
+
+        [HttpGet("/version")]
+        public ContentResult Version()
+        {
+
+
+            String utc = DateTime.UtcNow.ToString("yyyy-MM-ddTHH\\:mm\\:ssZ"); //.fffffffzzz");
+
+            /* var obj = new Version1
+             {
+
+                 brand= "Rtls Make" ,
+                 VendorSourceName= "RTLS east wing" ,
+                 version= "Alpha - 5.2",
+                 timestamp= "2018-06-28T17:48:18Z"
+
+             }*/
+            var obj = new Version1
+            {
+
+                brand = "Rtls Make",
+                VendorSourceName = "RTLSVENDOR1",
+                version = "Alpha-5.2",
+                timestamp = utc
+
+            };
+            var jsonString = Newtonsoft.Json.JsonConvert.SerializeObject(obj);
+
+            /*string final = "Version Result";
+            final += jsonString;
+           
+            */
+
+
+            Console.WriteLine(jsonString);
+            // return jsonString;
+            return Content(jsonString, "application/json");
+
+        }
+
+        public class tagsResponse
+        {
+
+            public Int32 Total;
+            public ArrayList tags;
+        }
+
+
+
+        [HttpGet("/tags")]
+        public ContentResult Tags()
+        {
+
+            string skip = HttpContext.Request.Query["skip"].ToString();
+            string top = HttpContext.Request.Query["top"].ToString();
+
+            ArrayList arr = MyFunctions.readFile("rauland_badges.txt");
+            tagsResponse res = new tagsResponse();
+            res.Total = arr.Count;
+            res.tags = new ArrayList();
+
+            int nSkip = Convert.ToInt32(skip);
+            int nTop = Convert.ToInt32(top);
+            for (int i = nSkip; (i < (nSkip + nTop) && i < arr.Count); i++)
+            {
+                JObject o = (JObject)arr[i];
+                string name = (string)o["Name"];
+                res.tags.Add(name);
+
+            }
+
+            var jsonString = Newtonsoft.Json.JsonConvert.SerializeObject(res);
+
+
+            Console.WriteLine(jsonString);
+            return Content(jsonString, "application/json");
+            // return jsonString.ToString();
+
+        }
+        public class locationsResponse
+        {
+
+            public Int32 Total;
+            public ArrayList locations;
+        }
+
+        [HttpGet("/locations")]
+        public ContentResult Locations()
+        {
+
+            string skip = HttpContext.Request.Query["skip"].ToString();
+            string top = HttpContext.Request.Query["top"].ToString();
+
+            ArrayList arr = MyFunctions.readFile("rauland_readers.txt");
+            locationsResponse res = new locationsResponse();
+            res.Total = arr.Count;
+            res.locations = new ArrayList();
+
+            int nSkip = Convert.ToInt32(skip);
+            int nTop = Convert.ToInt32(top);
+            for (int i = nSkip; (i < (nSkip + nTop) && i < arr.Count); i++)
+            {
+                JObject o = (JObject)arr[i];
+                string name = (string)o["Name"];
+                res.locations.Add(name);
+
+            }
+
+            var jsonString = Newtonsoft.Json.JsonConvert.SerializeObject(res);
+
+
+            Console.WriteLine(jsonString);
+            return Content(jsonString, "application/json");
+            //   return jsonString.ToString();
+
+        }
+
+
+
+
     }
 }
