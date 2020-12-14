@@ -33,6 +33,7 @@ namespace core3
                           "pa55w0rd!");
                     });*/
                     opt.ListenAnyIP(5000);
+                    Console.WriteLine("AAAAAAAAAAAAAA"); 
                 });
 
                 webBuilder.UseStartup<Startup>();

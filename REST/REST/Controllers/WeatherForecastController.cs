@@ -73,7 +73,7 @@ namespace REST.Controllers
              {
 
                  brand = "Rtls Make",
-                 VendorSourceName = "OmniRtls",
+                 VendorSourceName = "RTLSVENDOR1",
                  version = "Alpha-5.2",
                  timestamp = utc
 
@@ -127,6 +127,8 @@ namespace REST.Controllers
 
 
             Console.WriteLine(jsonString);
+            MyFunctions.writeFile("return Tag Request(skip=" + skip.ToString() + " top=" + top.ToString() + "=> " + jsonString);
+
             return Content(jsonString, "application/json");
            // return jsonString.ToString();
 
@@ -164,6 +166,7 @@ namespace REST.Controllers
 
 
             Console.WriteLine(jsonString);
+            MyFunctions.writeFile("return Locatiom Request(skip="+skip.ToString()+" top="+top.ToString()+"=> " + jsonString); 
             return Content(jsonString, "application/json");
          //   return jsonString.ToString();
 

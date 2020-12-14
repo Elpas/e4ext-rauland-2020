@@ -370,11 +370,11 @@ int CRaulandExt::WriteFile(CString fileName,CString &stData)
 				Sleep(10);
 			dataPath = g_eiris.GetDataPath();
 			lock.Unlock();
-			dataPath += "\\Rauland";
+			dataPath += "\\Extensions\\Dependencies\\Rauland\\OmniData";
 			if (!(CreateDirectory(dataPath, NULL) ||
 				ERROR_ALREADY_EXISTS == GetLastError()))
 			{
-				g_eiris.WriteEngineLog("rauland error creating directory unable to save pulse data");
+				g_eiris.WriteEngineLog("rauland error creating directory unable to save rauland data");
 				dataPath = "";
 				return 0;
 			}
@@ -443,6 +443,13 @@ void CRaulandExt::UpdateRaulandObj()
 		g_eiris.MonitorThread(m_hThread, dwThread, "TRauland");
 		g_eiris.AddMsgHandler(EIRIS_MSG_BADGE_EVENT, OnBadgeEvents, (long)this);
 		InitDll();
+		CString path = g_eiris.GetDataPath();
+		path += "\\Extensions\\Dependencies\\Rauland\\REST\\net5.0\\REST.exe"; 
+		if ((int)ShellExecute(NULL, "open", path, NULL, NULL, SW_SHOW) <= 32)
+		{
+			this->AddDebug("Error lanuching rauland rest API", true);
+		}
+
 
 	}
 

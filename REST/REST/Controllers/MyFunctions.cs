@@ -62,9 +62,20 @@ namespace REST.Controllers
             }
             return "";
         }
+        public static void writeFile(string line)
+        {
+            string path = System.Reflection.Assembly.GetExecutingAssembly().Location;
+            path=path.Replace("REST.dll", "debuglog.txt"); 
+            System.IO.File.AppendAllText(path, DateTime.Now.ToString() + " " +line +"\r\n");
+        }
         public static ArrayList readFile(string fileName)
         {
-            string path = @"C:\Eiris\e41srv\Data\Rauland\";
+
+            string path  =System.Reflection.Assembly.GetExecutingAssembly().Location;
+            path = path.Replace(@"\REST\net5.0\REST.dll", "");
+            path += "\\OmniData\\"; 
+
+          
             ArrayList arr = new ArrayList();
             int counter = 0;
             string line;

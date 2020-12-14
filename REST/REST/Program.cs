@@ -6,7 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using REST.Controllers; 
 
 namespace REST
 {
@@ -14,15 +13,30 @@ namespace REST
     {
         public static void Main(string[] args)
         {
-            //MyFunctions.SendHttpGet("http://192.168.0.64:8081/healthcheck");
             CreateHostBuilder(args).Build().Run();
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
-            Host.CreateDefaultBuilder(args)
-                .ConfigureWebHostDefaults(webBuilder =>
+          Host.CreateDefaultBuilder(args)
+            .ConfigureServices((context, services) =>
+            {
+
+            })
+            .ConfigureWebHostDefaults(webBuilder =>
+            {
+                webBuilder.ConfigureKestrel(opt =>
                 {
-                    webBuilder.UseStartup<Startup>();
+                    /* opt.ListenAnyIP(5001, listenOpt =>
+                     {
+                         listenOpt.UseHttps(
+                          @"D:\localshop.pfx",
+                           "pa55w0rd!");
+                     });*/
+                    opt.ListenAnyIP(10770);
+                    Console.WriteLine("configured Kestrel ok\r\n");
                 });
+
+                webBuilder.UseStartup<Startup>();
+            });
     }
 }
