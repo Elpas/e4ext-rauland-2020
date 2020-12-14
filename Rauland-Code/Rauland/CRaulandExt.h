@@ -15,7 +15,7 @@ class CSetup;
 typedef int (PROTOTYPE_sendHttpPost)(char*, char*, char*, char*, char*);
 typedef int (PROTOTYPE_sendHttpGet)(char*, char*, char*);
 
-#define PROP_VENDOR	"RTLSVENDOR1"
+#define PROP_VENDOR	"OmniVendor"
 
 class CRaulandExt :
     public CEirisExt

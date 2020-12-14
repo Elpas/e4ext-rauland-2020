@@ -56,7 +56,7 @@ namespace REST.Controllers
         [HttpGet("/version")]
         public ContentResult Version()
         {
-           
+            MyFunctions.writeFile("got version request"); 
 
             String utc = DateTime.UtcNow.ToString("yyyy-MM-ddTHH\\:mm\\:ssZ"); //.fffffffzzz");
 
@@ -73,19 +73,19 @@ namespace REST.Controllers
              {
 
                  brand = "Rtls Make",
-                 VendorSourceName = "RTLSVENDOR1",
+                 VendorSourceName = "OmniVendor",
                  version = "Alpha-5.2",
                  timestamp = utc
 
              };
               var jsonString = Newtonsoft.Json.JsonConvert.SerializeObject(obj);
-         
+
             /*string final = "Version Result";
             final += jsonString;
            
             */
 
-
+            MyFunctions.writeFile("version response =>"+ jsonString);
             Console.WriteLine(jsonString);
             // return jsonString;
             return Content(jsonString, "application/json");

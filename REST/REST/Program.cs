@@ -6,7 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-
+using REST.Controllers;
 namespace REST
 {
     public class Program
@@ -32,8 +32,11 @@ namespace REST
                           @"D:\localshop.pfx",
                            "pa55w0rd!");
                      });*/
+                    MyFunctions.writeFile("going to ConfigureKestrel on port 10770");
                     opt.ListenAnyIP(10770);
                     Console.WriteLine("configured Kestrel ok\r\n");
+                    MyFunctions.writeFile("Done  Kestrel config");
+
                 });
 
                 webBuilder.UseStartup<Startup>();

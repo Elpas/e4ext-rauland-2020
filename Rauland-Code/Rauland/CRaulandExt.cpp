@@ -503,6 +503,7 @@ CString CRaulandExt::GetValidName(long nId )
 {
 	CString name; 
 	g_eiris.GetValue(nId, "Name", name);
+	return name;
 	name.Replace("_", "");
 	name.Replace(",", "");
 	name.Replace(" ", "");

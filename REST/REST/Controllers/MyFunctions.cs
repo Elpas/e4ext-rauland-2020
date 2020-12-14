@@ -66,7 +66,7 @@ namespace REST.Controllers
         {
             string path = System.Reflection.Assembly.GetExecutingAssembly().Location;
             path=path.Replace("REST.dll", "debuglog.txt"); 
-            System.IO.File.AppendAllText(path, DateTime.Now.ToString() + " " +line +"\r\n");
+            System.IO.File.AppendAllText(path, "\r\n"+ DateTime.Now.ToString() + " " +line +"\r\n");
         }
         public static ArrayList readFile(string fileName)
         {
